@@ -1,0 +1,15 @@
+venv/
+.env
+__pycache__/
+*.pyc
+
+data/raw/
+data/processed/
+
+chroma_db/
+
+.ipynb_checkpoints/
+
+.streamlit/
+
+.DS_Store

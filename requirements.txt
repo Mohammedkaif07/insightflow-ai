@@ -1,0 +1,12 @@
+streamlit
+pymupdf
+python-dotenv
+llama-index
+chromadb
+openai
+google-generativeai
+pandas
+numpy
+scikit-learn
+ragas
+mlflow
