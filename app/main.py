@@ -38,16 +38,29 @@ if uploaded_files:
             raw_text = extract_pdf_text(file)
             cleaned_text = clean_text(raw_text)
 
-            st.write("### Document Preview")
-            st.text_area(
-                "Cleaned extracted text",
-                cleaned_text[:3000],
-                height=300
-            )
+            col1, col2 = st.columns(2)
 
-            st.write("### Document Stats")
-            st.write(f"Characters extracted: {len(cleaned_text)}")
-            st.write(f"Words extracted: {len(cleaned_text.split())}")
+            with col1:
+                st.write("### Raw Extracted Text")
+                st.text_area(
+                    "Before cleaning",
+                    raw_text[:3000],
+                    height=350
+                )
+
+            with col2:
+                st.write("### Cleaned Text")
+                st.text_area(
+                    "After cleaning",
+                    cleaned_text[:3000],
+                    height=350
+                )
+
+            st.write("### Cleaning Stats")
+            st.write(f"Raw characters: {len(raw_text)}")
+            st.write(f"Cleaned characters: {len(cleaned_text)}")
+            st.write(f"Raw words: {len(raw_text.split())}")
+            st.write(f"Cleaned words: {len(cleaned_text.split())}")
 
 st.divider()
 
