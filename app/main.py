@@ -5,8 +5,11 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(ROOT_DIR))
 
 import streamlit as st
+
 from ingestion.pdf_loader import extract_pdf_text
 from ingestion.cleaner import clean_text
+from chunking.chunker import chunk_text
+from retrieval.retriever import retrieve_relevant_chunks
 
 
 st.set_page_config(
@@ -30,6 +33,8 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True
 )
 
+all_chunk_records = []
+
 if uploaded_files:
     st.success(f"{len(uploaded_files)} document(s) uploaded successfully.")
 
@@ -37,6 +42,16 @@ if uploaded_files:
         with st.expander(f"Preview: {file.name}", expanded=True):
             raw_text = extract_pdf_text(file)
             cleaned_text = clean_text(raw_text)
+            chunks = chunk_text(cleaned_text)
+
+            for index, chunk in enumerate(chunks):
+                all_chunk_records.append(
+                    {
+                        "document_name": file.name,
+                        "chunk_id": index + 1,
+                        "text": chunk
+                    }
+                )
 
             col1, col2 = st.columns(2)
 
@@ -45,7 +60,8 @@ if uploaded_files:
                 st.text_area(
                     "Before cleaning",
                     raw_text[:3000],
-                    height=350
+                    height=350,
+                    key=f"raw_{file.name}"
                 )
 
             with col2:
@@ -53,21 +69,39 @@ if uploaded_files:
                 st.text_area(
                     "After cleaning",
                     cleaned_text[:3000],
-                    height=350
+                    height=350,
+                    key=f"cleaned_{file.name}"
                 )
 
-            st.write("### Cleaning Stats")
+            st.write("### Processing Stats")
             st.write(f"Raw characters: {len(raw_text)}")
             st.write(f"Cleaned characters: {len(cleaned_text)}")
             st.write(f"Raw words: {len(raw_text.split())}")
             st.write(f"Cleaned words: {len(cleaned_text.split())}")
+            st.write(f"Total chunks created: {len(chunks)}")
+
+            if chunks:
+                st.write("### Chunk Preview")
+
+                for i, chunk in enumerate(chunks[:3]):
+                    with st.expander(f"Chunk {i + 1}"):
+                        st.write(chunk)
 
 st.divider()
 
 question = st.text_input("Ask a question about your documents")
 
-if st.button("Generate Answer"):
-    if question:
-        st.info("RAG pipeline will be connected in the next phase.")
+if st.button("Search Relevant Chunks"):
+    if question and all_chunk_records:
+        with st.spinner("Searching relevant chunks..."):
+            results = retrieve_relevant_chunks(question, all_chunk_records)
+
+        st.write("### Top Relevant Chunks")
+
+        for result in results:
+            with st.expander(
+                f"{result['document_name']} | Chunk {result['chunk_id']} | Score: {result['score']}"
+            ):
+                st.write(result["text"])
     else:
-        st.warning("Please enter a question first.")
+        st.warning("Please upload documents and enter a question first.")
