@@ -9,9 +9,19 @@ import streamlit as st
 from ingestion.pdf_loader import extract_pdf_text
 from ingestion.cleaner import clean_text
 from chunking.chunker import chunk_text
-from retrieval.retriever import retrieve_relevant_chunks
+from embedding.embedder import create_embeddings
+from vector_db.chroma_store import store_chunks
 
 
+def retrieve_from_chroma(question):
+    return [
+        {
+            "document_name": "Test",
+            "chunk_id": 1,
+            "score": 0.99,
+            "text": f"Search working → {question}"
+        }
+    ]
 st.set_page_config(
     page_title="InsightFlow AI",
     page_icon="📄",
@@ -82,26 +92,36 @@ if uploaded_files:
 
             if chunks:
                 st.write("### Chunk Preview")
-
                 for i, chunk in enumerate(chunks[:3]):
                     with st.expander(f"Chunk {i + 1}"):
                         st.write(chunk)
+
+    if all_chunk_records:
+        with st.spinner("Storing document chunks in ChromaDB..."):
+            chunk_texts = [record["text"] for record in all_chunk_records]
+            chunk_embeddings = create_embeddings(chunk_texts)
+            store_chunks(all_chunk_records, chunk_embeddings)
+
+        st.success("Document chunks stored in ChromaDB.")
 
 st.divider()
 
 question = st.text_input("Ask a question about your documents")
 
 if st.button("Search Relevant Chunks"):
-    if question and all_chunk_records:
-        with st.spinner("Searching relevant chunks..."):
-            results = retrieve_relevant_chunks(question, all_chunk_records)
+    if question:
+        with st.spinner("Searching ChromaDB..."):
+            results = retrieve_from_chroma(question)
 
         st.write("### Top Relevant Chunks")
 
-        for result in results:
-            with st.expander(
-                f"{result['document_name']} | Chunk {result['chunk_id']} | Score: {result['score']}"
-            ):
-                st.write(result["text"])
+        if results:
+            for result in results:
+                with st.expander(
+                    f"{result['document_name']} | Chunk {result['chunk_id']} | Score: {result['score']}"
+                ):
+                    st.write(result["text"])
+        else:
+            st.warning("No relevant chunks found.")
     else:
-        st.warning("Please upload documents and enter a question first.")
+        st.warning("Please enter a question first.")
