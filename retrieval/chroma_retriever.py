@@ -7,11 +7,7 @@ def search_chroma(question, top_k=3):
         return []
 
     question_embedding = create_embeddings([question])
-
-    results = search_chunks(
-        question_embedding,
-        top_k=top_k
-    )
+    results = search_chunks(question_embedding, top_k=top_k)
 
     output = []
 
@@ -27,7 +23,7 @@ def search_chroma(question, top_k=3):
             {
                 "document_name": metadatas[i].get("document_name", "Unknown"),
                 "chunk_id": metadatas[i].get("chunk_id", "Unknown"),
-                "score": round(float(distances[i]), 3),
+                "distance": round(float(distances[i]), 3),
                 "text": documents[i],
             }
         )

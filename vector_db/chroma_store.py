@@ -1,13 +1,25 @@
 import chromadb
 
 client = chromadb.Client()
+COLLECTION_NAME = "current_documents"
 
-collection = client.get_or_create_collection(
-    name="insightflow_documents"
-)
+
+def reset_collection():
+    try:
+        client.delete_collection(name=COLLECTION_NAME)
+    except Exception:
+        pass
+
+    return client.get_or_create_collection(name=COLLECTION_NAME)
+
+
+def get_collection():
+    return client.get_or_create_collection(name=COLLECTION_NAME)
 
 
 def store_chunks(chunk_records, embeddings):
+    collection = reset_collection()
+
     ids = []
     documents = []
     metadatas = []
@@ -35,6 +47,8 @@ def store_chunks(chunk_records, embeddings):
 
 
 def search_chunks(question_embedding, top_k=3):
+    collection = get_collection()
+
     results = collection.query(
         query_embeddings=question_embedding.tolist(),
         n_results=top_k

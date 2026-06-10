@@ -1,31 +1,36 @@
+from sklearn.metrics.pairwise import cosine_similarity
 from embedding.embedder import create_embeddings
-from vector_db.chroma_store import search_chunks
 
 
-def real_retrieve_from_chroma(question, top_k=3):
-    if not question:
+def retrieve_relevant_chunks(question, chunk_records, top_k=3):
+    if not question or not chunk_records:
         return []
 
+    chunk_texts = [record["text"] for record in chunk_records]
+
+    chunk_embeddings = create_embeddings(chunk_texts)
     question_embedding = create_embeddings([question])
-    results = search_chunks(question_embedding, top_k=top_k)
 
-    output = []
+    similarities = cosine_similarity(question_embedding, chunk_embeddings)[0]
 
-    if not results or not results.get("documents"):
-        return output
+    ranked_results = sorted(
+        enumerate(similarities),
+        key=lambda x: x[1],
+        reverse=True
+    )
 
-    documents = results["documents"][0]
-    metadatas = results["metadatas"][0]
-    distances = results["distances"][0]
+    results = []
 
-    for i in range(len(documents)):
-        output.append(
+    for index, score in ranked_results[:top_k]:
+        record = chunk_records[index]
+
+        results.append(
             {
-                "document_name": metadatas[i].get("document_name", "Unknown"),
-                "chunk_id": metadatas[i].get("chunk_id", "Unknown"),
-                "score": round(float(distances[i]), 3),
-                "text": documents[i],
+                "document_name": record["document_name"],
+                "chunk_id": record["chunk_id"],
+                "score": round(float(score), 3),
+                "text": record["text"],
             }
         )
 
-    return output
+    return results
