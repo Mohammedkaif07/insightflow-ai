@@ -2,12 +2,16 @@ from embedding.embedder import create_embeddings
 from vector_db.chroma_store import search_chunks
 
 
-def real_retrieve_from_chroma(question, top_k=3):
+def search_chroma(question, top_k=3):
     if not question:
         return []
 
     question_embedding = create_embeddings([question])
-    results = search_chunks(question_embedding, top_k=top_k)
+
+    results = search_chunks(
+        question_embedding,
+        top_k=top_k
+    )
 
     output = []
 

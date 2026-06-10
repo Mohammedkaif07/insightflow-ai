@@ -11,17 +11,9 @@ from ingestion.cleaner import clean_text
 from chunking.chunker import chunk_text
 from embedding.embedder import create_embeddings
 from vector_db.chroma_store import store_chunks
+from retrieval.chroma_retriever import search_chroma
 
 
-def retrieve_from_chroma(question):
-    return [
-        {
-            "document_name": "Test",
-            "chunk_id": 1,
-            "score": 0.99,
-            "text": f"Search working → {question}"
-        }
-    ]
 st.set_page_config(
     page_title="InsightFlow AI",
     page_icon="📄",
@@ -111,7 +103,7 @@ question = st.text_input("Ask a question about your documents")
 if st.button("Search Relevant Chunks"):
     if question:
         with st.spinner("Searching ChromaDB..."):
-            results = retrieve_from_chroma(question)
+            results = search_chroma(question)
 
         st.write("### Top Relevant Chunks")
 

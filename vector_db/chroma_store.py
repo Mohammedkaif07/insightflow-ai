@@ -12,12 +12,11 @@ def store_chunks(chunk_records, embeddings):
     documents = []
     metadatas = []
 
-    for i, record in enumerate(chunk_records):
+    for record in chunk_records:
         doc_name = record["document_name"].replace(" ", "_")
         chunk_id = str(record["chunk_id"])
 
         ids.append(f"{doc_name}_chunk_{chunk_id}")
-
         documents.append(record["text"])
 
         metadatas.append(
